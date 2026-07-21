@@ -9,6 +9,10 @@ app.use(express.json());
 // Active tenant check for all route
 app.use(tenantContext);
 
+//Testing get
+app.get("/",async(req,res)=>{
+  res.status(200).json({message:"Hello welcome"})
+})
 // Test booking route
 app.get('/api/bookings', async (req, res) => {
   if (!req.tenantId) {
