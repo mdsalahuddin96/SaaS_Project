@@ -1,10 +1,20 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const tenantContext = require('./middleware/tenantContext');
-const Booking = require('./models/Booking');
-const env=require("./config/env");
+import express from "express"
+import mongoose from "mongoose";
+import tenantContext from "./middleware/tenantContext.js";
+import Booking from "./models/Booking.js"
+import env from "./config/env.js"
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./auth/auth.js";
+import testRoute from "./routes/testRoute.js"
 const app = express();
+
+
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
 app.use(express.json());
+
+// using router
+app.use("/api/test", testRoute)
 
 // Active tenant check for all route
 app.use(tenantContext);

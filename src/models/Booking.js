@@ -1,5 +1,5 @@
-const mongoose=require("mongoose")
-
+// const mongoose=require("mongoose")
+import mongoose from "mongoose";
 
 const bookingSchema=new mongoose.Schema({
     tenantId:{type:mongoose.Schema.Types.ObjectId, ref:"Tenant", require:true},
@@ -8,5 +8,6 @@ const bookingSchema=new mongoose.Schema({
     status:{type:String, required:true, trim:true, enum:["pending","confirmed","cancelled"], default:"pending" },
     createdAt:{type:Date, default:Date.now}
 })
-
-module.exports=mongoose.model("Booking",bookingSchema);
+const Booking=mongoose.model("Booking",bookingSchema);
+// module.exports=mongoose.model("Booking",bookingSchema);
+export default Booking;

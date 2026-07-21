@@ -15,5 +15,5 @@ if (!envServer.success) {
   console.error("Invalid environment variables:", envServer.error.format());
   process.exit(1); 
 }
-
-export const env = envServer.data;
+const env = envServer.data;
+export default env;

@@ -1,5 +1,5 @@
-const Tenant = require('../models/Tenant');
-
+// const Tenant = require('../models/Tenant');
+import Tenant from "../models/Tenant.js"
 const tenantContext = async (req, res, next) => {
   const host = req.headers.host; 
   const parts = host.split('.');
@@ -28,4 +28,4 @@ const tenantContext = async (req, res, next) => {
   }
 };
 
-module.exports = tenantContext;
+export default tenantContext;

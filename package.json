@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.js",
@@ -12,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@better-auth/mongo-adapter": "^1.6.23",
+    "better-auth": "^1.6.23",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

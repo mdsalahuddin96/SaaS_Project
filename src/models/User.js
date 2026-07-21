@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-
+// const mongoose = require('mongoose');
+import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
   tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
   name: { type: String, required: true },
@@ -10,5 +10,5 @@ const userSchema = new mongoose.Schema({
 
 //Security trick: Emails cannot be duplicated under the same tenant
 userSchema.index({ tenantId: 1, email: 1 }, { unique: true });
-
-module.exports = mongoose.model('User', userSchema);
+const User=mongoose.model('User', userSchema);
+export default User;
