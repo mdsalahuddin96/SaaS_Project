@@ -43,10 +43,10 @@ app.get("/api/bookings", async (req, res) => {
 
 // Database connection and server Start
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost:27017/saas_booking")
+  .connect(env.MONGO_URI || "mongodb://localhost:27017/saas_booking")
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log(err));
 
-app.listen(process.env.PORT, () =>
-  console.log(`Server running on port ${process.env.PORT}`),
+app.listen(env.PORT, () =>
+  console.log(`Server running on port ${env.PORT}`),
 );

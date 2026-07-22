@@ -63,3 +63,4 @@ export const registerTenant = async (req, res) => {
   }
 };
 
+
