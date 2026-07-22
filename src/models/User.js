@@ -1,11 +1,8 @@
 // const mongoose = require('mongoose');
 import mongoose from "mongoose";
-const userSchema = new mongoose.Schema({
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'staff', 'customer'], default: 'customer' }, 
-  createdAt: { type: Date, default: Date.now }
+const userSchema = new mongoose.Schema({},{
+  collection:"user",
+  strict:false
 });
 
 //Security trick: Emails cannot be duplicated under the same tenant

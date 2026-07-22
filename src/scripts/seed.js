@@ -33,7 +33,7 @@ const seedDatabase = async () => {
     const customerUser = await auth.api.signUpEmail({
       body: {
         tenantId: testTenant._id.toString(),
-        name: "John Gym Owner",
+        name: "Mr.Rahim",
         email: "customer@apex.com",
         role: "customer",
         password: "customer.1234",

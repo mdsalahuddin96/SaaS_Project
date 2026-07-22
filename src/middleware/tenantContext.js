@@ -3,7 +3,6 @@ import Tenant from "../models/Tenant.js"
 const tenantContext = async (req, res, next) => {
   const host = req.headers.host; 
   const parts = host.split('.');
-
   // If it is a main domain without localhost or subdomains (such as onboarding or main landing pages)
   if (parts.length < 2 || parts[0] === 'localhost' || parts[0] === 'www') {
     req.tenantId = null;

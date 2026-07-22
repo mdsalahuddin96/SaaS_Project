@@ -32,9 +32,7 @@ app.get("/api/bookings", async (req, res) => {
 
   try {
     // only the current tenant's data will come in
-    const bookings = await Booking.find({ tenantId: req.tenantId }).populate(
-      "userId",
-    );
+    const bookings = await Booking.find({ tenantId: req.tenantId }).populate("userId","name email");
     res.json({ success: true, tenantId: req.tenantId, bookings });
   } catch (err) {
     res.status(500).json({ error: err.message });
