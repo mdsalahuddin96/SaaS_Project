@@ -16,5 +16,16 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-
+  user:{
+    additionalFields:{
+      tenantId:{
+        type:"string",
+        required:false
+      },
+      role:{
+        type:"string",
+        defaultValue:"user"
+      }
+    }
+  }
 });
