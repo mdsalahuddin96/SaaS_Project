@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: saas_booking_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    environment:
+      MONGO_INITDB_DATABASE: saas_booking
+    volumes:
+      - mongo_data:/data/db
+
+  mongo-replica-setup:
+    image: mongo:latest
+    container_name: saas_mongo_replica_setup
+    depends_on:
+      - mongodb
+    restart: "no"
+    entrypoint: [ "bash", "-c", "sleep 3 && mongosh --host mongodb:27017 --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongodb:27017\"}]})'" ]
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: saas_mongo_ui
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_URL: "mongodb://mongodb:27017/saas_booking?replicaSet=rs0"
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo_data:
