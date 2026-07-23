@@ -1,6 +1,5 @@
 export default async function DashboardLayout({ children, params }) {
   const { subdomain } =await params;
-  console.log("subdomain", subdomain)
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100 font-inter">
       {/* Responsive Sidebar */}
