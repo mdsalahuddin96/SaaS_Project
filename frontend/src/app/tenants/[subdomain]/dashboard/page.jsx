@@ -1,5 +1,6 @@
 'use client';
 
+import { getBookings } from '@/lib/api/getBookings';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -13,13 +14,8 @@ export default function TenantDashboardPage() {
     const fetchTenantBookings = async () => {
       try {
         // Request with subdomain to backend
-        const res = await fetch(`http://${subdomain}.localhost:5000/api/bookings`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        const data = await res.json();
-        if (!res.ok) {
+        const data = await getBookings(subdomain)
+        if (!data.success) {
           throw new Error(data.error || 'Failed to load tenant bookings.');
         }
 
