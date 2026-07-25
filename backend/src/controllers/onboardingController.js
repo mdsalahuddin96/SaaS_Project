@@ -16,7 +16,7 @@ export const registerTenant = async (req, res) => {
   if (!subdomainRegex.test(cleanSubdomain)) {
     return res.status(400).json({ error: 'subdomain contain only lowercase, number and (-)' });
   }
-
+  let newTenant;
   try {
     // Check is this domain already exist on the tenant
     const existingTenant = await Tenant.findOne({ subdomain: cleanSubdomain });
@@ -25,7 +25,7 @@ export const registerTenant = async (req, res) => {
     }
 
     //create new tenant (organization)
-    const newTenant = await Tenant.create({
+     newTenant = await Tenant.create({
       name: orgName,
       subdomain: cleanSubdomain
     });
@@ -40,7 +40,6 @@ export const registerTenant = async (req, res) => {
             role:"admin"
         }
     })
-
     // successful response and redirect url to dashboard
     const redirectUrl = `http://${newTenant.subdomain}.localhost:3000/dashboard`;
     res.status(201).json({
@@ -59,6 +58,15 @@ export const registerTenant = async (req, res) => {
 
   } catch (error) {
     console.error('Onboarding Error:', error);
+    if(newTenant){
+      try{
+        await Tenant.findByIdAndDelete(newTenant._id)
+        console.log(`Rollback successful: Cleaned up tenant ${newTenant._id}`);
+      }
+      catch(cleanupError){
+        console.error('Failed to rollback tenant creation:', cleanupError);
+      }
+    }
     res.status(500).json({ error: 'Server encountered an error. Filed Onboarding!' });
   }
 };
