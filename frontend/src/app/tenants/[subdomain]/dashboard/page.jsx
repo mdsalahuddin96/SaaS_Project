@@ -1,6 +1,6 @@
 'use client';
 
-import { getBookings } from '@/lib/api/getBookings';
+import { fetchBookings } from '@/lib/api/getBookings';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -14,12 +14,13 @@ export default function TenantDashboardPage() {
     const fetchTenantBookings = async () => {
       try {
         // Request with subdomain to backend
-        const data = await getBookings(subdomain)
-        if (!data.success) {
+        const bookings = await fetchBookings(subdomain)
+        console.log(bookings)
+        if (!bookings.success) {
           throw new Error(data.error || 'Failed to load tenant bookings.');
         }
 
-        setBookings(data.bookings || []);
+        setBookings(bookings.data|| []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -79,10 +80,10 @@ export default function TenantDashboardPage() {
                   {bookings.map((booking) => (
                     <tr key={booking._id} className="hover:bg-slate-800/50 transition">
                       <td className="p-4 font-medium text-white">
-                        {booking.userId?.name || 'N/A'}
+                        {booking.customerName || 'N/A'}
                       </td>
                       <td className="p-4 text-slate-400">
-                        {booking.userId?.email || 'N/A'}
+                        {booking.customerEmail || 'N/A'}
                       </td>
                       <td className="p-4">
                         {new Date(booking.bookingDate).toLocaleDateString()}

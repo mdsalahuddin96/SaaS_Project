@@ -17,6 +17,7 @@ export const getBookings = async (req, res, next) => {
     if (status) {
       filter.status = status;
     }
+    console.log("filter",filter)
     const bookings = await Booking.find(filter)
 
     res.status(200).json({
