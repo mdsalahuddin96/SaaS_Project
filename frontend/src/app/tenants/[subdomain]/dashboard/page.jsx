@@ -1,111 +1,201 @@
-'use client';
+"use client";
 
-import { fetchBookings } from '@/lib/api/getBookings';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState, useEffect, use, useCallback } from "react";
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  Search,
+  Filter,
+  RefreshCw,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { fetchBookings } from "@/lib/api/bookings";
+import BookingList from "@/components/dashboard/booking/BookingsList";
+import CreateBookingModal from "@/components/dashboard/booking/CreateBookinModal";
 
-export default function TenantDashboardPage() {
-  const params = useParams();
-  const {subdomain}=params
+
+export default function BookingsPage({ params }) {
+  const resolvedParams = use(params);
+  const subdomain = resolvedParams.subdomain;
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [selectedDate, setSelectedDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  //Data loading function
+  const loadBookings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchBookings(subdomain, selectedDate);
+      setBookings(data?.data);
+    } catch (error) {
+      toast.error(error.message || "Failed to load bookings");
+    } finally {
+      setLoading(false);
+    }
+  }, [subdomain, selectedDate]);
   useEffect(() => {
-    const fetchTenantBookings = async () => {
-      try {
-        // Request with subdomain to backend
-        const bookings = await fetchBookings(subdomain)
-        console.log(bookings)
-        if (!bookings.success) {
-          throw new Error(data.error || 'Failed to load tenant bookings.');
-        }
+    loadBookings();
+  }, [loadBookings]);
 
-        setBookings(bookings.data|| []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Filtering logic(Search & Status)
+  const filteredBookings = bookings.filter((booking) => {
+    const matchesStatus =
+      statusFilter === "all" || booking.status === statusFilter;
+    const matchesSearch =
+      booking?.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking?.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking?.serviceName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    fetchTenantBookings();
-  }, [subdomain]);
+    return matchesStatus && matchesSearch;
+  });
+
+
+  const stats = {
+    total: bookings.length,
+    confirmed: bookings.filter((b) => b.status === "confirmed").length,
+    pending: bookings.filter((b) => b.status === "pending").length,
+    cancelled: bookings.filter((b) => b.status === "cancelled").length,
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-6 rounded-xl">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* 1. Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h2 className="text-xl font-bold text-white capitalize">{subdomain} Workspace</h2>
-          <p className="text-slate-400 text-sm">Tenant Isolation Active via Request Context</p>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <CalendarIcon className="w-7 h-7 text-indigo-500" />
+            Booking Management
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Manage your schedule, appointments, and client bookings for{" "}
+            <span className="text-indigo-400 font-medium">{subdomain}</span>.
+          </p>
         </div>
-        <div className="bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 px-4 py-2 rounded-lg text-sm font-semibold">
-          Total Bookings: {bookings.length}
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={loadBookings}
+            className="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            title="Refresh Bookings"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-sm transition-all shadow-lg shadow-indigo-600/20"
+          >
+            <Plus className="w-4 h-4" />
+            New Booking
+          </button>
         </div>
       </div>
 
-      {/* loading and error handling */}
-      {loading && (
-        <div className="p-8 text-center text-slate-400">Loading isolated tenant data...</div>
-      )}
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Booking table */}
-      {!loading && !error && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-800 font-semibold text-slate-300">
-            Recent Bookings
+      {/* 2. Quick Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400 font-medium">
+              Total Bookings
+            </span>
+            <CalendarIcon className="w-4 h-4 text-slate-500" />
           </div>
-          {bookings.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">
-              No bookings found for this tenant workspace.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 uppercase text-xs font-semibold">
-                  <tr>
-                    <th className="p-4">Customer Name</th>
-                    <th className="p-4">Email</th>
-                    <th className="p-4">Booking Date</th>
-                    <th className="p-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {bookings.map((booking) => (
-                    <tr key={booking._id} className="hover:bg-slate-800/50 transition">
-                      <td className="p-4 font-medium text-white">
-                        {booking.customerName || 'N/A'}
-                      </td>
-                      <td className="p-4 text-slate-400">
-                        {booking.customerEmail || 'N/A'}
-                      </td>
-                      <td className="p-4">
-                        {new Date(booking.bookingDate).toLocaleDateString()}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold uppercase ${
-                            booking.status === 'confirmed'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                          }`}
-                        >
-                          {booking.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <p className="text-2xl font-bold text-white mt-2">{stats.total}</p>
         </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-emerald-400 font-medium">
+              Confirmed
+            </span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          </div>
+          <p className="text-2xl font-bold text-emerald-400 mt-2">
+            {stats.confirmed}
+          </p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-amber-400 font-medium">Pending</span>
+            <Clock className="w-4 h-4 text-amber-500" />
+          </div>
+          <p className="text-2xl font-bold text-amber-400 mt-2">
+            {stats.pending}
+          </p>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-rose-400 font-medium">Cancelled</span>
+            <XCircle className="w-4 h-4 text-rose-500" />
+          </div>
+          <p className="text-2xl font-bold text-rose-400 mt-2">
+            {stats.cancelled}
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Search & Filter Bar */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search by customer name, email, or service..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-950 text-slate-200 text-sm pl-9 pr-4 py-2 rounded-lg border border-slate-800 focus:outline-none focus:border-indigo-500 transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Date Picker */}
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="bg-slate-950 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-800 focus:outline-none focus:border-indigo-500 transition-colors"
+          />
+
+          {/* Status Select */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-slate-950 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-800 focus:outline-none focus:border-indigo-500 transition-colors capitalize"
+          >
+            <option value="all">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 4. Bookings Display Section */}
+      <BookingList
+        bookings={filteredBookings}
+        loading={loading}
+        subdomain={subdomain}
+        onRefresh={loadBookings}
+      />
+
+      {/* 5. Create Booking Modal */}
+      {isCreateModalOpen && (
+        <CreateBookingModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          subdomain={subdomain}
+          onSuccess={loadBookings}
+        />
       )}
     </div>
   );

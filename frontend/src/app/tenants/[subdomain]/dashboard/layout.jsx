@@ -1,5 +1,14 @@
+import Navlinks from "@/components/dashboard/Navlinks";
+
 export default async function DashboardLayout({ children, params }) {
   const { subdomain } =await params;
+  const NavItems=[
+    {text:"Bookings", href:"/dashboard"},
+    {text:"Customers", href:"/dashboard/customers"},
+    {
+      text:"Settings", href:"/dashboard/settings"
+    }
+  ]
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100 font-inter">
       {/* Responsive Sidebar */}
@@ -8,9 +17,7 @@ export default async function DashboardLayout({ children, params }) {
           {subdomain} Panel
         </div>
         <nav className="space-y-4">
-          <a href="#" className="block p-3 rounded-lg bg-indigo-600 text-white font-medium">Bookings</a>
-          <a href="#" className="block p-3 rounded-lg text-slate-400 hover:bg-slate-900 transition">Customers</a>
-          <a href="#" className="block p-3 rounded-lg text-slate-400 hover:bg-slate-900 transition">Settings</a>
+          {NavItems.map((item,i)=><Navlinks key={i} item={item}/>)}
         </nav>
       </aside>
 

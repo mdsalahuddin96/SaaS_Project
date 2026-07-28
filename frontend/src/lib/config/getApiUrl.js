@@ -5,7 +5,6 @@ export const getApiUrl=(subdomain)=>{
         return API_BASE_URL;
     }
     const url=new URL(API_BASE_URL)
-    console.log("urlHostname",url.hostname)
     url.hostname=`${subdomain}.${url.hostname}`
     return url.toString()
 }
