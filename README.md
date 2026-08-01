@@ -7,32 +7,100 @@ This platform supports dynamic wildcard subdomains (e.g., `apex.localhost:3000`)
 
 ---
 
-## 📌 Features Built (Week 1 Objectives)
+# 🗓️ Week 2: Booking APIs & Calendar UI
 
-- **Tech Stack:** Next.js (App Router), Express.js (ESM), MongoDB/Mongoose, BetterAuth, Tailwind CSS.
-- **Environment Safety:** Strict `.env` schema validation using **Zod** to prevent runtime configuration failures.
-- **Local Infrastructure:** Single-command database setup using **Docker Compose** (MongoDB + Mongo Express UI).
-- **Multi-Tenant Schema & Isolation:**
-  - Standardized schema for `Tenant`, `User`, and `Booking`.
-  - Middleware-driven tenant context (`tenantContext.js`) extracting subdomains and enforcing query isolation by `tenantId`.
-- **Data Seeding:** Custom seed script (`npm run seed`) to rapidly generate test tenants, users, and booking data.
-- **Tenant Onboarding & Auth:**
-  - Automated organization setup via `onboardingController`.
-  - Admin user creation integrated with **BetterAuth**.
-- **Wildcard Subdomain Routing:**
-  - Dynamic route matching for subdomains (e.g., `tenant.localhost:3000`).
-  - Isolated dashboard shell with responsive navigation.
+## 📌 Overview
+
+The primary focus of Week 2 was building a reliable, secure, and type-safe **Booking Management System** for the multi-tenant SaaS platform. This phase involved implementing **Zod Validation**, an **Idempotency Key Middleware**, and a **Standardized Error Handling Framework** on the backend, alongside an interactive **Dashboard UI**, **Create Booking Modal**, and **Toast Notifications** on the frontend.
 
 ---
 
-## 🛠️ System Architecture & Approach
+## 🎯 Completed Objectives
 
-### 1. Data Isolation Approach
-Instead of separate database instances per tenant (high cost), we implemented a **Logical Data Isolation (Shared DB, Separate Schema Context)** pattern. Every document contains a `tenantId` field. Express middleware parses the incoming request header/host, resolves the tenant, and injects `req.tenantId` globally into request handlers, guaranteeing zero cross-tenant data leaks.
+* [x] **Strict Zod Input Validation:** Built request schemas on the backend to sanitize and validate incoming request payloads.
+* [x] **Idempotency Protection:** Implemented an `x-idempotency-key` header middleware to prevent duplicate bookings caused by network retries or multiple clicks.
+* [x] **Standard Error Response Schema:** Created a centralized and predictable error response schema across all endpoints.
+* [x] **Postman/Insomnia Collection:** Prepared structured API collections for documentation and testing.
+* [x] **Dashboard Booking UI:** Built a clean dashboard layout featuring summary metrics, live search/filtering, and responsive booking cards.
+* [x] **Create Booking Form & Modal:** Developed a modal form equipped with client-side validation and automated idempotency key generation.
+* [x] **CRUD Operations & Feedback:** Integrated status updating, deletion workflows, and user notifications via `react-hot-toast`.
+* [x] **Mobile Responsiveness:** Designed a mobile-first, responsive layout suitable for all screen sizes.
 
-### 2. Subdomain Resolution
-The architecture relies on parsing `Host` headers. In development, subdomains like `apex.localhost:3000` resolve automatically to `localhost`. Next.js routes traffic via custom middleware while Express extracts the subdomain context for API requests.
+---
 
+## 🏗️ Architecture & Features
+
+### 1. Backend Enhancements
+
+* **Validation Schema (`src/validations/bookings.validation.js`):**
+* Validates fields such as `customerName`, `customerEmail`, `serviceName`, `bookingDate`, `startTime`, `endTime`, and `status`.
+
+
+* **Idempotency Engine (`src/middleware/idempotency.js`):**
+* Intercepts `x-idempotency-key` headers and caches successful responses for 24 hours to prevent duplicate data insertion.
+
+
+* **Global Error Handler (`src/middleware/errorHandler.js`):**
+* Captures Zod, Mongoose CastError, Duplicate Key, and Server Errors, formatting them into a standard response:
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request payload",
+    "details": []
+  }
+}
+
+```
+
+### 2. Frontend Dashboard Features
+
+* **Live Search & Filter:** Filter appointments by customer name, email, service, booking date, or status.
+* **Interactive Quick Stats:** Displays high-level counters for Total, Confirmed, Pending, and Cancelled bookings.
+* **Idempotency Integration:** Automatically generates a unique `x-idempotency-key` for every new booking submission.
+
+---
+
+## 🔌 API Endpoints Summary
+
+| Method | Endpoint | Description | Headers Required |
+| --- | --- | --- | --- |
+| `GET` | `/api/bookings` | Fetch tenant bookings (supports `date` & `status` filters) | `x-tenant-subdomain` |
+| `POST` | `/api/bookings` | Create a new booking | `x-tenant-subdomain`, `x-idempotency-key` |
+| `PATCH` | `/api/bookings/:id` | Update booking status or details | `x-tenant-subdomain` |
+| `DELETE` | `/api/bookings/:id` | Delete a booking record | `x-tenant-subdomain` |
+
+---
+
+## 🧪 Postman Collection Payload Sample
+
+Example request header and body for testing the `POST` endpoint:
+
+```http
+POST http://apex.localhost:5000/api/bookings
+Content-Type: application/json
+x-idempotency-key: unique-uuid-v4-key
+
+{
+  "customerName": "Salah Uddin",
+  "customerEmail": "salahuddin@example.com",
+  "customerPhone": "+8801700000000",
+  "serviceName": "Full Body Checkup",
+  "bookingDate": "2026-08-01",
+  "startTime": "10:00",
+  "endTime": "11:00",
+  "status": "confirmed",
+  "notes": "First time patient"
+}
+
+```
+
+---
+
+
+3. **Access Dashboard:**
+Open your browser and navigate to your tenant subdomain (e.g., `[http://apex.localhost:3000/dashboard](http://apex.localhost:3000/dashboard)`) to manage bookings.
 ---
 
 ## 🚦 Getting Started & Run Instructions
