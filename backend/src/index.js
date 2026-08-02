@@ -7,6 +7,7 @@ import env from "./config/env.js";
 import testRoute from "./routes/testRoute.js";
 import authRoute from "./routes/authRoute.js";
 import bookingRoute from "./routes/booking.route.js"
+import paymentRoute from "./routes/payment.route.js"
 import { errorHandler } from "./middleware/errorHandler.js";
 const app = express();
 app.use(express.json());
@@ -19,6 +20,8 @@ app.use(tenantContext);
 app.use("/api/test", testRoute);
 app.use("/api", authRoute);
 app.use("/api/bookings",bookingRoute)
+app.use("/api/payments",paymentRoute)
+
 //Testing get
 app.get("/", async (req, res) => {
   res.status(200).json({ message: "Hello welcome" });
