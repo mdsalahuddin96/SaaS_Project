@@ -1,3 +1,4 @@
+import { getApiUrl } from "../config/frontendUrl.js";
 import { stripe } from "../config/stripe.js";
 import Subscription from "../models/Subscription.js";
 import Tenant from "../models/Tenant.js";
@@ -37,24 +38,21 @@ export const createCheckoutSession = async (req, res, next) => {
       });
     }
 
-    // ১. টেন্যান্টের বিদ্যমান সাবস্ক্রিপশন রেকর্ড চেক বা তৈরি
+    // Checking tenant existing subscription
     let subscription = await Subscription.findOne({ tenantId });
 
     let customerId = subscription?.stripeCustomerId;
 
     // যদি স্ট্রাইপে কাস্টমার না তৈরি করা থাকে, তবে নতুন কাস্টমার আইডি তৈরি করব
     if (!customerId) {
-      // ১. টেন্যান্টের অ্যাডমিন ইউজার ফেচ করা
       const adminUser = await User.findOne({
         tenantId: tenant._id,
         role: "admin",
       });
-
-      // ২. সেফটি ফলব্যাক সহ ইমেইল এবং নাম নির্ধারণ
       const customerEmail = adminUser?.email || `admin@${tenant.subdomain}.com`;
       const customerName = adminUser?.name || tenant.name;
 
-      // ৩. Stripe Customer তৈরি
+      // Creating stripe customer
       const customer = await stripe.customers.create({
         email: customerEmail,
         name: customerName,
@@ -80,9 +78,9 @@ export const createCheckoutSession = async (req, res, next) => {
       }
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl =getApiUrl(tenant.subdomain)
 
-    // ২. Stripe Checkout Session তৈরি
+    //create stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
@@ -93,7 +91,6 @@ export const createCheckoutSession = async (req, res, next) => {
           quantity: 1,
         },
       ],
-      // Metadata দিয়ে রাখা হচ্ছে যেন Webhook-এ টেন্যান্ট আইডি পাওয়া যায়
       metadata: {
         tenantId: tenant._id.toString(),
         plan,
@@ -104,15 +101,15 @@ export const createCheckoutSession = async (req, res, next) => {
           plan,
         },
       },
-      success_url: `${frontendUrl}/dashboard/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${frontendUrl}/dashboard/billing/cancel`,
+      success_url: `${frontendUrl}/tenants/${tenant.subdomain}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/dashboard/billing?canceled=true`,
     });
 
     res.status(200).json({
       success: true,
       data: {
         sessionId: session.id,
-        url: session.url, // এই URL-এ ফ্রন্টএন্ড থেকে ইউজারকে রিডাইরেক্ট করতে হবে
+        url: session.url,
       },
     });
   } catch (error) {
@@ -121,12 +118,12 @@ export const createCheckoutSession = async (req, res, next) => {
 };
 
 /**
- * Stripe Billing Customer Portal Session তৈরি করা
+ * Stripe Billing Customer Portal Session create
  */
 export const createPortalSession = async (req, res, next) => {
   try {
     const tenantId = req.tenantId;
-
+    const tenant = await Tenant.findById(tenantId);
     const subscription = await Subscription.findOne({ tenantId });
 
     if (!subscription || !subscription.stripeCustomerId) {
@@ -139,7 +136,7 @@ export const createPortalSession = async (req, res, next) => {
       });
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = getApiUrl(tenant.subdomain);
 
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
@@ -158,12 +155,11 @@ export const createPortalSession = async (req, res, next) => {
 };
 
 /**
- * টেন্যান্টের বর্তমান সাবস্ক্রিপশন ইনফো দেখা
+ * Tenant present subscription info
  */
 export const getSubscriptionStatus = async (req, res, next) => {
   try {
     const tenantId = req.tenantId;
-
     let subscription = await Subscription.findOne({ tenantId });
 
     if (!subscription) {

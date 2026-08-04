@@ -8,7 +8,6 @@ const tenantContext = async (req, res, next) => {
     req.tenantId = null;
     return next();
   }
-
   const subdomain = parts[0].toLowerCase();
   try {
     // finding tenant using subdomain

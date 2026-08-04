@@ -8,19 +8,25 @@ import testRoute from "./routes/testRoute.js";
 import authRoute from "./routes/authRoute.js";
 import bookingRoute from "./routes/booking.route.js"
 import paymentRoute from "./routes/payment.route.js"
+import webhookRoute from "./routes/webhook.route.js"
 import { errorHandler } from "./middleware/errorHandler.js";
+
 const app = express();
-app.use(express.json());
 app.use(cors());
+
+app.use("/api/webhooks",webhookRoute)
+app.use(express.json());
+
 
 // Active tenant check for all route
 app.use(tenantContext);
 
 // using router
 app.use("/api/test", testRoute);
-app.use("/api", authRoute);
+app.use("/api/auth", authRoute);
 app.use("/api/bookings",bookingRoute)
 app.use("/api/payments",paymentRoute)
+
 
 //Testing get
 app.get("/", async (req, res) => {
