@@ -3,7 +3,7 @@ import { stripe } from "../config/stripe.js";
 import Subscription from "../models/Subscription.js";
 import Tenant from "../models/Tenant.js";
 import User from "../models/User.js";
-// Stripe Price IDs (আপনার Stripe Dashboard-এ তৈরি করা Product Price ID দিয়ে রিপ্লেস করবেন)
+// Stripe Price IDs 
 const PRICE_IDS = {
   pro: process.env.STRIPE_PRO_PRICE_ID,
   enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID,
@@ -14,8 +14,8 @@ const PRICE_IDS = {
  */
 export const createCheckoutSession = async (req, res, next) => {
   try {
-    const { plan } = req.body; // 'pro' or 'enterprise'
-    const tenantId = req.tenantId; // tenantId from Tenant middleware
+    const { plan } = req.body; 
+    const tenantId = req.tenantId; 
 
     if (!plan || !PRICE_IDS[plan]) {
       return res.status(400).json({
@@ -43,7 +43,7 @@ export const createCheckoutSession = async (req, res, next) => {
 
     let customerId = subscription?.stripeCustomerId;
 
-    // যদি স্ট্রাইপে কাস্টমার না তৈরি করা থাকে, তবে নতুন কাস্টমার আইডি তৈরি করব
+    //if stripe customer is not created, it create a new customerId
     if (!customerId) {
       const adminUser = await User.findOne({
         tenantId: tenant._id,
@@ -101,7 +101,7 @@ export const createCheckoutSession = async (req, res, next) => {
           plan,
         },
       },
-      success_url: `${frontendUrl}/tenants/${tenant.subdomain}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${frontendUrl}/dashboard/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontendUrl}/dashboard/billing?canceled=true`,
     });
 

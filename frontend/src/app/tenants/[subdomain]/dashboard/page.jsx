@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useEffect, use, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Calendar as CalendarIcon,
   Plus,
   Search,
-  Filter,
   RefreshCw,
   Clock,
   CheckCircle2,
   XCircle,
-  AlertCircle,
+  Zap,
+  Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { fetchBookings } from "@/lib/api/bookings";
 import BookingList from "@/components/dashboard/booking/BookingsList";
 import CreateBookingModal from "@/components/dashboard/booking/CreateBookinModal";
+import { fetchSubscriptionStatus } from "@/lib/api/payment";
 
+const FREE_PLAN_LIMIT = 2; 
 
 export default function BookingsPage({ params }) {
+  const router = useRouter();
   const resolvedParams = use(params);
   const subdomain = resolvedParams.subdomain;
   const [bookings, setBookings] = useState([]);
@@ -27,35 +31,59 @@ export default function BookingsPage({ params }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState("free");
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
-  //Data loading function
+  // Data loading function
   const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
       const data = await fetchBookings(subdomain, selectedDate);
-      setBookings(data?.data);
+      setBookings(data?.data || []);
     } catch (error) {
       toast.error(error.message || "Failed to load bookings");
     } finally {
       setLoading(false);
     }
   }, [subdomain, selectedDate]);
+
+  const fetchSubscription = useCallback(async () => {
+    try {
+      const subscription = await fetchSubscriptionStatus(subdomain);
+      setSubscriptionStatus(subscription.plan || "free");
+    } catch (error) {
+      toast.error(error.message || "Failed to load subscription");
+    }
+  }, [subdomain]);
+
   useEffect(() => {
     loadBookings();
-  }, [loadBookings]);
+    fetchSubscription();
+  }, [loadBookings, fetchSubscription]);
 
-  // Filtering logic(Search & Status)
+  // Check if limit reached
+  const isLimitReached =subscriptionStatus === "free" && bookings.length >= FREE_PLAN_LIMIT;
+
+  // Handle New Booking Click
+  const handleOpenCreateModal = () => {
+    if (isLimitReached) {
+      setShowLimitModal(true); 
+    } else {
+      setIsCreateModalOpen(true); 
+    }
+  };
+
+  // Filtering logic (Search & Status)
   const filteredBookings = bookings.filter((booking) => {
     const matchesStatus =
       statusFilter === "all" || booking.status === statusFilter;
     const matchesSearch =
-      booking?.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking?.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking?.serviceName.toLowerCase().includes(searchQuery.toLowerCase());
+      booking?.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking?.customerEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking?.serviceName?.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
-
 
   const stats = {
     total: bookings.length,
@@ -89,14 +117,49 @@ export default function BookingsPage({ params }) {
           </button>
 
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-sm transition-all shadow-lg shadow-indigo-600/20"
           >
-            <Plus className="w-4 h-4" />
+            {isLimitReached ? (
+              <Lock className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
             New Booking
           </button>
         </div>
       </div>
+
+      {/* Free Plan Usage Warning Banner */}
+      {subscriptionStatus === "free" && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">
+                Free Plan Usage:{" "}
+                <span className="text-indigo-400">
+                  {bookings.length} / {FREE_PLAN_LIMIT}
+                </span>{" "}
+                bookings used
+              </p>
+              <p className="text-xs text-slate-400">
+                Upgrade to Pro for unlimited client bookings and features.
+              </p>
+            </div>
+          </div>
+          {isLimitReached && (
+            <button
+              onClick={() => router.push(`/dashboard/pricing`)}
+              className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap"
+            >
+              Upgrade Now
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 2. Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -157,7 +220,6 @@ export default function BookingsPage({ params }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Date Picker */}
           <input
             type="date"
             value={selectedDate}
@@ -165,7 +227,6 @@ export default function BookingsPage({ params }) {
             className="bg-slate-950 text-slate-200 text-sm px-3 py-2 rounded-lg border border-slate-800 focus:outline-none focus:border-indigo-500 transition-colors"
           />
 
-          {/* Status Select */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -196,6 +257,43 @@ export default function BookingsPage({ params }) {
           subdomain={subdomain}
           onSuccess={loadBookings}
         />
+      )}
+
+      {/* 6. Upgrade Required Modal (When Limit Exceeded) */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
+            <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold text-white">
+              Booking Limit Reached!
+            </h3>
+            <p className="text-sm text-slate-400">
+              You have reached your limit of{" "}
+              <span className="text-white font-semibold">{FREE_PLAN_LIMIT} bookings</span>{" "}
+              on the Free Plan. Upgrade to Pro to unlock unlimited bookings.
+            </p>
+
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setShowLimitModal(false);
+                  router.push(`/dashboard/pricing`);
+                }}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg text-sm transition-colors"
+              >
+                Upgrade Plan
+              </button>
+              <button
+                onClick={() => setShowLimitModal(false)}
+                className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

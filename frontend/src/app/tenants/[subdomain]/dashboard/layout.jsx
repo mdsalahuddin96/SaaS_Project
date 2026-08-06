@@ -5,9 +5,8 @@ export default async function DashboardLayout({ children, params }) {
   const NavItems=[
     {text:"Bookings", href:"/dashboard"},
     {text:"Customers", href:"/dashboard/customers"},
-    {
-      text:"Settings", href:"/dashboard/settings"
-    }
+    {text:"Pricing", href:"/dashboard/pricing"},
+    {text:"Billing", href:"/dashboard/billing"},
   ]
   return (
     <div className="flex min-h-screen bg-slate-900 text-slate-100 font-inter">

@@ -1,6 +1,6 @@
-import React from 'react';
 
-const AboutPage = () => {
+
+const AboutPage =async () => {
     return (
         <div>
             About page

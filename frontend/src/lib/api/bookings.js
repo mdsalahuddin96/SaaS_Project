@@ -41,7 +41,6 @@ export const createBooking = async (subdomain, bookingData) => {
   });
 
   const result = await response.json();
-  console.log(result)
   if (!result.success) {
     const error = new Error(result.error?.message || 'Failed to create booking');
     throw error;
