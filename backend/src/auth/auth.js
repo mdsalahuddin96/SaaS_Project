@@ -1,4 +1,3 @@
-
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
@@ -17,17 +16,27 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  user:{
-    additionalFields:{
-      tenantId:{
-        type:"string",
-        required:false
+  user: {
+    additionalFields: {
+      tenantId: {
+        type: "string",
+        required: false,
       },
-      role:{
-        type:"string",
-        defaultValue:"user"
-      }
-    }
+      role: {
+        type: "string",
+        defaultValue: "user",
+      },
+    },
   },
+
+  // new
+  trustedOrigins: ["http://localhost:3000", "http://*.localhost:3000"],
+  // trustedOrigins: ["http://lvh.me:3000", "http://*.lvh.me:3000"],
   
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: "lvh.me", // এখানে সামনে ডট দেওয়া লাগবে না, Better Auth নিজে হ্যান্ডেল করবে
+    },
+  },
 });

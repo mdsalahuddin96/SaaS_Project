@@ -18,6 +18,7 @@ import { fetchBookings } from "@/lib/api/bookings";
 import BookingList from "@/components/dashboard/booking/BookingsList";
 import CreateBookingModal from "@/components/dashboard/booking/CreateBookinModal";
 import { fetchSubscriptionStatus } from "@/lib/api/payment";
+import { useSession } from "@/lib/auth-client";
 
 const FREE_PLAN_LIMIT = 2; 
 
@@ -33,7 +34,8 @@ export default function BookingsPage({ params }) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState("free");
   const [showLimitModal, setShowLimitModal] = useState(false);
-
+  const session=useSession()
+  console.log("session in dashboard",session)
   // Data loading function
   const loadBookings = useCallback(async () => {
     try {

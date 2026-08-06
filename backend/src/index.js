@@ -12,7 +12,21 @@ import webhookRoute from "./routes/webhook.route.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
-app.use(cors())
+// app.use(cors())
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // রিকোয়েস্ট উইথআউট অরিজিন (যেমন Postman/Mobile) অথবা যেকোনো .localhost:3000 সাবডোমেইন এলাউ করার জন্য
+      if (!origin || /\.localhost:3000$/.test(origin) || origin === "http://localhost:3000") {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Cookies / Sessions পাঠানোর জন্য এটি আবশ্যক
+  })
+);
+
 app.use("/api/webhooks", webhookRoute);
 
 app.use(express.json());

@@ -14,7 +14,7 @@ export function proxy(request) {
 
   // If a subdomain exists, internally rewrite the request
   // Example: /dashboard -> /tenants/gym/dashboard
-  if (url.pathname === '/' || url.pathname.startsWith('/dashboard')) {
+  if (url.pathname === '/' || url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/login')) {
     url.pathname = `/tenants/${subdomain}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
@@ -23,5 +23,5 @@ export function proxy(request) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*'],
+  matcher: ['/','/login', '/dashboard/:path*'],
 };
