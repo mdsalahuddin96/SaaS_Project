@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Navlinks from "@/components/dashboard/Navlinks";
 import Signout from "@/components/dashboard/Signout";
 import { Menu, X, Building2 } from "lucide-react";
+import Navlinks from "./Navlinks";
 
 export default function DashboardSidebar({ subdomain, navItems }) {
   const [isOpen, setIsOpen] = useState(false);
