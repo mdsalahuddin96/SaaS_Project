@@ -31,12 +31,10 @@ export const auth = betterAuth({
 
   // new
   trustedOrigins: ["http://localhost:3000", "http://*.localhost:3000"],
-  // trustedOrigins: ["http://lvh.me:3000", "http://*.lvh.me:3000"],
-  
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
-      domain: "lvh.me", // এখানে সামনে ডট দেওয়া লাগবে না, Better Auth নিজে হ্যান্ডেল করবে
+      domain: "lvh.me",
     },
   },
 });

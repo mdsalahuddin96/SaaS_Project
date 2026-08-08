@@ -1,6 +1,4 @@
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import Navlinks from "@/components/dashboard/Navlinks";
-import Signout from "@/components/dashboard/Signout";
 
 export default async function DashboardLayout({ children, params }) {
   const { subdomain } =await params;
@@ -13,15 +11,6 @@ export default async function DashboardLayout({ children, params }) {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-slate-900 text-slate-100 font-inter">
       {/* Responsive Sidebar */}
-      {/* <aside className="w-64 bg-slate-950 border-r border-slate-800 p-6 hidden md:flex md:flex-col">
-        <div className="mb-8 font-bold text-xl uppercase tracking-wider text-indigo-400">
-          {subdomain} Panel
-        </div>
-        <nav className="space-y-4">
-          {NavItems.map((item,i)=><Navlinks key={i} item={item}/>)}
-        </nav>
-        <Signout/>
-      </aside> */}
       <DashboardSidebar subdomain={subdomain} navItems={NavItems}/>
 
       {/* Main content area*/}
