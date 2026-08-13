@@ -1,19 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Clock, 
-  Calendar as CalendarIcon, 
-  Trash2, 
-  Briefcase
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { deleteBooking, updateBooking } from '@/lib/api/bookings';
+import { useState } from "react";
+import {
+  User,
+  Mail,
+  Phone,
+  Clock,
+  Calendar as CalendarIcon,
+  Trash2,
+  Briefcase,
+  Edit3,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { deleteBooking, updateBooking } from "@/lib/api/bookings";
+import Link from "next/link";
 
-export default function BookingList({ bookings, loading, subdomain, onRefresh }) {
+export default function BookingList({
+  bookings,
+  loading,
+  subdomain,
+  onRefresh,
+}) {
   const [updatingId, setUpdatingId] = useState(null);
 
   // Status Change Handler
@@ -24,7 +31,7 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
       toast.success(`Booking status updated to ${newStatus}`);
       onRefresh();
     } catch (error) {
-      toast.error(error.message || 'Failed to update status');
+      toast.error(error.message || "Failed to update status");
     } finally {
       setUpdatingId(null);
     }
@@ -32,15 +39,15 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
 
   // Delete Handler
   const handleDelete = async (bookingId) => {
-    if (!confirm('Are you sure you want to delete this booking?')) return;
+    if (!confirm("Are you sure you want to delete this booking?")) return;
 
     try {
       setUpdatingId(bookingId);
       await deleteBooking(subdomain, bookingId);
-      toast.success('Booking deleted successfully');
+      toast.success("Booking deleted successfully");
       onRefresh();
     } catch (error) {
-      toast.error(error.message || 'Failed to delete booking');
+      toast.error(error.message || "Failed to delete booking");
     } finally {
       setUpdatingId(null);
     }
@@ -48,10 +55,10 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
 
   // Badge Color Styles
   const statusStyles = {
-    confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    pending: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    cancelled: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    completed: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    confirmed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    cancelled: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    completed: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
   };
 
   if (loading) {
@@ -67,9 +74,12 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center space-y-3">
         <CalendarIcon className="w-12 h-12 text-slate-600 mx-auto" />
-        <h3 className="text-lg font-semibold text-slate-200">No Bookings Found</h3>
+        <h3 className="text-lg font-semibold text-slate-200">
+          No Bookings Found
+        </h3>
         <p className="text-sm text-slate-400 max-w-md mx-auto">
-          There are no appointments or bookings matching your search or filter criteria.
+          There are no appointments or bookings matching your search or filter
+          criteria.
         </p>
       </div>
     );
@@ -104,10 +114,18 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
                 statusStyles[booking.status] || statusStyles.pending
               }`}
             >
-              <option value="pending" className="bg-slate-900 text-white">Pending</option>
-              <option value="confirmed" className="bg-slate-900 text-white">Confirmed</option>
-              <option value="completed" className="bg-slate-900 text-white">Completed</option>
-              <option value="cancelled" className="bg-slate-900 text-white">Cancelled</option>
+              <option value="pending" className="bg-slate-900 text-white">
+                Pending
+              </option>
+              <option value="confirmed" className="bg-slate-900 text-white">
+                Confirmed
+              </option>
+              <option value="completed" className="bg-slate-900 text-white">
+                Completed
+              </option>
+              <option value="cancelled" className="bg-slate-900 text-white">
+                Cancelled
+              </option>
             </select>
           </div>
 
@@ -115,9 +133,15 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
           <div className="space-y-2 text-xs text-slate-300 border-t border-b border-slate-800/80 py-3">
             <div className="flex items-center gap-2 text-slate-400">
               <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{new Date(booking?.bookingDate).toLocaleDateString('en-US', { dateStyle: 'medium' })}</span>
+              <span>
+                {new Date(booking?.bookingDate).toLocaleDateString("en-US", {
+                  dateStyle: "medium",
+                })}
+              </span>
               <Clock className="w-3.5 h-3.5 text-indigo-400 ml-2" />
-              <span>{booking?.startTime} - {booking?.endTime}</span>
+              <span>
+                {booking?.startTime} - {booking?.endTime}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 text-slate-400">
@@ -140,7 +164,7 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
           </div>
 
           {/* Card Footer */}
-          <div className="flex items-center justify-between pt-1">
+          {/* <div className="flex items-center justify-between pt-1">
             <span className="text-[11px] text-slate-500">
               ID: ...{booking?._id.slice(-6)}
             </span>
@@ -153,6 +177,32 @@ export default function BookingList({ bookings, loading, subdomain, onRefresh })
             >
               <Trash2 className="w-4 h-4" />
             </button>
+          </div> */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-800/50">
+            <span className="text-[11px] text-slate-500 font-mono">
+              #{booking?._id.slice(-6)}
+            </span>
+
+            <div className="flex items-center gap-2">
+              {/* Collaborative Editor Page-এ যাওয়ার লিংক */}
+              <Link
+                href={`/tenants/${subdomain}/dashboard/bookings/${booking._id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg text-xs font-medium transition-colors border border-indigo-500/20"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Notes & Live Sync</span>
+              </Link>
+
+              {/* Delete Button */}
+              <button
+                onClick={() => handleDelete(booking._id)}
+                disabled={updatingId === booking._id}
+                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                title="Delete Booking"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       ))}

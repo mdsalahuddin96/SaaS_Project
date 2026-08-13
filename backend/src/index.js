@@ -1,5 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
+import http from "http";
 import cors from "cors";
 import tenantContext from "./middleware/tenantContext.js";
 import Booking from "./models/Booking.js";
@@ -10,19 +11,24 @@ import bookingRoute from "./routes/booking.route.js";
 import paymentRoute from "./routes/payment.route.js";
 import webhookRoute from "./routes/webhook.route.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { initYjsWebSocketServer } from "./websocket/yjsServer.js";
 
 const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || /\.localhost:3000$/.test(origin) || origin === "http://localhost:3000") {
+      if (
+        !origin ||
+        /\.localhost:3000$/.test(origin) ||
+        origin === "http://localhost:3000"
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // Cookies / Sessions 
-  })
+    credentials: true, // Cookies / Sessions
+  }),
 );
 
 app.use("/api/webhooks", webhookRoute);
@@ -51,4 +57,10 @@ mongoose
   .then(() => console.log("MongoDB Connected..."))
   .catch((err) => console.log(err));
 
-app.listen(env.PORT, () => console.log(`Server running on port ${env.PORT}`));
+const server = http.createServer(app);
+
+initYjsWebSocketServer(server);
+
+server.listen(env.PORT || 5000, () =>
+  console.log(`Server running on port ${env.PORT || 5000}`),
+);
