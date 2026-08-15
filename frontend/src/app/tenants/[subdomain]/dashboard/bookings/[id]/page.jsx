@@ -1,4 +1,3 @@
-
 // import EditorWrapper from '@/components/dashboard/booking/EditorWrapper';
 
 // export default async function BookingDetailsPage({ params }) {
@@ -7,7 +6,7 @@
 //   return (
 //     <div className="p-6 max-w-4xl mx-auto space-y-6">
 //       <h1 className="text-xl font-bold text-white">Booking #{id} Details</h1>
-      
+
 //       {/* Collaborative Notes Section */}
 //       <EditorWrapper bookingId={id} subdomain={subdomain} />
 //     </div>
@@ -38,12 +37,15 @@ import {
 import toast from "react-hot-toast";
 import CollaborativeEditor from "@/components/dashboard/booking/CollaborativeEditor";
 import { fetchBookings, updateBooking } from "@/lib/api/bookings";
+import { useSession } from "@/lib/auth-client";
 
 export default function BookingDetailsPage({ params }) {
+  const { data } = useSession();
+  const currentUser = data?.user;
   const router = useRouter();
   const resolvedParams = use(params);
   const { subdomain, id: bookingId } = resolvedParams;
-
+  console.log({ subdomain, bookingId });
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -128,7 +130,7 @@ export default function BookingDetailsPage({ params }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div className="flex items-center gap-4">
           <Link
-            href={`/tenants/${subdomain}/dashboard/bookings`}
+            href={`/dashboard/bookings`}
             className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 transition-colors"
             title="Back to Bookings"
           >
@@ -282,7 +284,8 @@ export default function BookingDetailsPage({ params }) {
           </div>
 
           <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-3">
-            Subdomain: <span className="text-slate-300 font-medium">{subdomain}</span>
+            Subdomain:{" "}
+            <span className="text-slate-300 font-medium">{subdomain}</span>
           </div>
         </div>
       </div>
@@ -296,7 +299,8 @@ export default function BookingDetailsPage({ params }) {
               Live Collaborative Workspace
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Real-time synchronization for notes, customer requirements, and internal updates.
+              Real-time synchronization for notes, customer requirements, and
+              internal updates.
             </p>
           </div>
 
@@ -307,8 +311,19 @@ export default function BookingDetailsPage({ params }) {
         </div>
 
         {/* Tiptap + Yjs Editor Component Integration */}
+       
         <div className="bg-slate-950 rounded-xl border border-slate-800 min-h-[350px] p-2">
-          <CollaborativeEditor documentId={`booking-${booking._id}`} />
+          {subdomain && bookingId ? (
+            <CollaborativeEditor
+              bookingId={bookingId}
+              subdomain={subdomain}
+              currentUser={currentUser}
+            />
+          ) : (
+            <div className="flex items-center justify-center p-8 text-slate-500 text-sm">
+              Loading room credentials...
+            </div>
+          )}
         </div>
       </div>
     </div>

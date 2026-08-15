@@ -3,7 +3,8 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 export default async function DashboardLayout({ children, params }) {
   const { subdomain } =await params;
   const NavItems=[
-    {text:"Bookings", href:"/dashboard"},
+    {text:"Overview", href:"/dashboard"},
+    {text:"Bookings", href:"/dashboard/bookings"},
     {text:"Customers", href:"/dashboard/customers"},
     {text:"Pricing", href:"/dashboard/pricing"},
     {text:"Billing", href:"/dashboard/billing"},

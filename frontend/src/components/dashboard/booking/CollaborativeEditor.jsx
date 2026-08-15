@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+import { useDebounce } from "@/hooks/useDebounce"; // Debounce hook import
+import toast from "react-hot-toast";
 import {
   Bold,
   Italic,
@@ -20,6 +22,8 @@ import {
   Wifi,
   WifiOff,
   Loader2,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
 
 const CURSOR_COLORS = [
@@ -47,7 +51,51 @@ function getColorFromName(name) {
 }
 
 // Tiptap Inner Editor Component
-function TiptapInnerEditor({ ydoc, provider, user }) {
+function TiptapInnerEditor({
+  ydoc,
+  provider,
+  user,
+  status,
+  bookingId,
+  subdomain,
+  onSaveStatusChange,
+}) {
+  const [editorContent, setEditorContent] = useState("");
+  const debouncedContent = useDebounce(editorContent, 2000); // 2 seconds debounce delay
+
+  // REST Fallback Auto-save Handler
+  const handleFallbackSave = useCallback(
+    async (htmlContent) => {
+      if (!htmlContent) return;
+      onSaveStatusChange({ isSaving: true, lastSavedTime: null });
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/notes/${bookingId}/fallback`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: htmlContent,
+              subdomain,
+            }),
+          },
+        );
+
+        if (response.ok) {
+          const time = new Date().toLocaleTimeString();
+          onSaveStatusChange({ isSaving: false, lastSavedTime: time });
+        } else {
+          onSaveStatusChange({ isSaving: false, lastSavedTime: null });
+        }
+      } catch (error) {
+        console.error("Fallback auto-save error:", error);
+        onSaveStatusChange({ isSaving: false, lastSavedTime: null });
+      }
+    },
+    [bookingId, subdomain, onSaveStatusChange],
+  );
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -69,7 +117,20 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
           "prose prose-invert max-w-none focus:outline-none min-h-[220px] px-4 py-3 text-slate-200 placeholder:text-slate-600 text-sm leading-relaxed",
       },
     },
+    onUpdate: ({ editor }) => {
+      // WebSocket বন্ধ থাকলে Local State এডিট করা হবে যা পরে Debounce হয়ে REST API দিয়ে সেভ হবে
+      if (status === "disconnected") {
+        setEditorContent(editor.getHTML());
+      }
+    },
   });
+
+  // Debounced auto-save trigger effect
+  useEffect(() => {
+    if (status === "disconnected" && debouncedContent) {
+      handleFallbackSave(debouncedContent);
+    }
+  }, [debouncedContent, status, handleFallbackSave]);
 
   if (!editor) return null;
 
@@ -85,6 +146,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Bold"
         >
           <Bold className="w-4 h-4" />
         </button>
@@ -96,6 +158,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Italic"
         >
           <Italic className="w-4 h-4" />
         </button>
@@ -107,6 +170,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Strikethrough"
         >
           <Strikethrough className="w-4 h-4" />
         </button>
@@ -123,6 +187,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Heading 2"
         >
           <Heading2 className="w-4 h-4" />
         </button>
@@ -136,6 +201,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Heading 3"
         >
           <Heading3 className="w-4 h-4" />
         </button>
@@ -150,6 +216,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Bullet List"
         >
           <List className="w-4 h-4" />
         </button>
@@ -161,6 +228,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
               ? "bg-indigo-600 text-white"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
+          title="Ordered List"
         >
           <ListOrdered className="w-4 h-4" />
         </button>
@@ -171,6 +239,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
           type="button"
           onClick={() => editor.chain().focus().undo().run()}
           className="p-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Undo"
         >
           <Undo className="w-4 h-4" />
         </button>
@@ -178,6 +247,7 @@ function TiptapInnerEditor({ ydoc, provider, user }) {
           type="button"
           onClick={() => editor.chain().focus().redo().run()}
           className="p-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          title="Redo"
         >
           <Redo className="w-4 h-4" />
         </button>
@@ -200,7 +270,13 @@ export default function CollaborativeEditor({
   const [activeUsers, setActiveUsers] = useState([]);
   const [yjsSession, setYjsSession] = useState(null);
 
-  const docName = `${subdomain}:${bookingId}`;
+  // Fallback Auto-save States
+  const [isSavingFallback, setIsSavingFallback] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+  const docName = useMemo(() => {
+    if (!subdomain || !bookingId) return null;
+    return `${subdomain}:${bookingId}`;
+  }, [subdomain, bookingId]);
   const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5000/yjs";
 
   // Client Mount Check
@@ -216,26 +292,38 @@ export default function CollaborativeEditor({
     return { name, color };
   }, [currentUser]);
 
-  // Yjs Instance Creation & Cleanup
+  const handleSaveStatusChange = useCallback(({ isSaving, lastSavedTime }) => {
+    setIsSavingFallback(isSaving);
+    if (lastSavedTime) {
+      setLastSavedTime(lastSavedTime);
+    }
+  }, []);
+
+  // Yjs Instance Creation & Connection Handlers
   useEffect(() => {
     if (!mounted) return;
 
-    // Create Y.Doc and explicitly initialize XML fragment
     const doc = new Y.Doc();
-    doc.getXmlFragment("default"); // This prepares the internal ystate for Tiptap
+    doc.getXmlFragment("default");
 
-    // Create WebSocket Provider
     const provider = new WebsocketProvider(wsUrl, docName, doc, {
       connect: true,
+      maxBackoffTime: 5000,
     });
 
-    // Handle status
     const handleStatus = ({ status }) => {
       setStatus(status);
+      if (status === "disconnected") {
+        toast.error(
+          "Real-time connection lost. Switched to REST Fallback Mode.",
+        );
+      } else if (status === "connected") {
+        toast.success("Real-time synchronization restored!");
+      }
     };
+
     provider.on("status", handleStatus);
 
-    // Handle awareness / active users
     const awareness = provider.awareness;
     awareness.setLocalStateField("user", user);
 
@@ -258,7 +346,6 @@ export default function CollaborativeEditor({
     awareness.on("change", updateUsers);
     updateUsers();
 
-    // Set state safely once ready
     setYjsSession({ doc, provider });
 
     return () => {
@@ -269,7 +356,7 @@ export default function CollaborativeEditor({
       setYjsSession(null);
     };
   }, [mounted, docName, wsUrl, user]);
-  
+
   if (!mounted || !yjsSession?.doc || !yjsSession?.provider) {
     return (
       <div className="flex items-center justify-center p-8 bg-slate-900 border border-slate-800 rounded-2xl text-slate-400 gap-2">
@@ -281,6 +368,31 @@ export default function CollaborativeEditor({
 
   return (
     <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      {/* Disconnection Warning Amber Banner */}
+      {status === "disconnected" && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2.5 flex items-center justify-between text-amber-300 text-xs font-medium">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              Real-time server disconnected. Changes are auto-saving locally via
+              REST Fallback Mode.
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isSavingFallback ? (
+              <span className="inline-flex items-center gap-1 text-slate-400">
+                <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+              </span>
+            ) : lastSavedTime ? (
+              <span className="inline-flex items-center gap-1 text-emerald-400">
+                <CheckCircle2 className="w-3 h-3" /> Saved at {lastSavedTime}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {/* Editor Header & Status Bar */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950/60 border-b border-slate-800">
         <div className="flex items-center gap-2">
@@ -309,12 +421,12 @@ export default function CollaborativeEditor({
                 <Wifi className="w-3 h-3" /> Live
               </span>
             ) : status === "connecting" ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber500/10 text-amber-400 border border-amber-500/20">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 <Loader2 className="w-3 h-3 animate-spin" /> Connecting...
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                <WifiOff className="w-3 h-3" /> Disconnected
+                <WifiOff className="w-3 h-3" /> Offline (Fallback)
               </span>
             )}
           </div>
@@ -327,6 +439,10 @@ export default function CollaborativeEditor({
         ydoc={yjsSession.doc}
         provider={yjsSession.provider}
         user={user}
+        status={status}
+        bookingId={bookingId}
+        subdomain={subdomain}
+        onSaveStatusChange={handleSaveStatusChange}
       />
     </div>
   );

@@ -1,3 +1,5 @@
+
+
 import { WebSocketServer } from 'ws';
 import { setupWSConnection, setPersistence } from './yjsUtils.js';
 import { mongoPersistence } from '../lib/yjsPersistence.js';
@@ -31,11 +33,19 @@ export const initYjsWebSocketServer = (server) => {
       `http://${req.headers.host || "localhost"}`
     );
     
-    const docName = url.pathname.replace(/^\/yjs\/?/, "");
+    let docName = url.pathname.replace(/^\/yjs\/?/, "");
+    docName = decodeURIComponent(docName);
 
-    console.log(` Client connected to room/docName: ${docName}`);
+    if (!docName || docName.trim() === "" || docName === "null" || docName === "undefined") {
+      console.error("Rejected WS connection: Invalid docName ->", docName);
+      ws.close(1008, "Document name required");
+      return;
+    }
+
+    console.log(`Client connected to room/docName: ${docName}`);
+    req.url = `/${docName}`;
     setupWSConnection(ws, req, { docName, gc: true });
   });
 
-  console.log(" Yjs WebSocket Server is active and attached to HTTP Server");
+  console.log("Yjs WebSocket Server active and attached to HTTP Server");
 };

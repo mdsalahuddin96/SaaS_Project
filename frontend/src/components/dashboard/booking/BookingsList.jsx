@@ -164,29 +164,14 @@ export default function BookingList({
           </div>
 
           {/* Card Footer */}
-          {/* <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-slate-500">
-              ID: ...{booking?._id.slice(-6)}
-            </span>
-
-            <button
-              onClick={() => handleDelete(booking._id)}
-              disabled={updatingId === booking._id}
-              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
-              title="Delete Booking"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div> */}
           <div className="flex items-center justify-between pt-2 border-t border-slate-800/50">
             <span className="text-[11px] text-slate-500 font-mono">
               #{booking?._id.slice(-6)}
             </span>
 
             <div className="flex items-center gap-2">
-              {/* Collaborative Editor Page-এ যাওয়ার লিংক */}
               <Link
-                href={`/tenants/${subdomain}/dashboard/bookings/${booking._id}`}
+                href={`/dashboard/bookings/${booking._id}`}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg text-xs font-medium transition-colors border border-indigo-500/20"
               >
                 <Edit3 className="w-3.5 h-3.5" />

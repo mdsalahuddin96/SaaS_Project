@@ -1,4 +1,3 @@
-
 import * as Y from 'yjs';
 import * as syncProtocol from 'y-protocols/sync';
 import * as awarenessProtocol from 'y-protocols/awareness';
@@ -22,6 +21,7 @@ export const getYDoc = (docname, gc = true) => {
   let doc = docs.get(docname);
   if (doc === undefined) {
     doc = new Y.Doc({ gc });
+    doc.docName = docname; 
     docs.set(docname, doc);
     
     doc.conns = new Map();
@@ -55,7 +55,8 @@ export const getYDoc = (docname, gc = true) => {
       doc.conns.forEach((_, connection) => send(doc, connection, message));
     });
 
-    if (persistence !== null) {
+    // Persistence Binding
+    if (persistence !== null && typeof persistence.bindState === 'function') {
       persistence.bindState(docname, doc);
     }
   }
@@ -87,11 +88,15 @@ const closeConn = (doc, conn) => {
         null
       );
     }
+    
+    const currentDocName = doc.docName;
+
     if (doc.conns.size === 0 && persistence !== null) {
-      persistence.writeState(doc.name, doc).then(() => {
+      persistence.writeState(currentDocName, doc).then(() => {
         doc.destroy();
       });
-      docs.delete(doc.name);
+      docs.delete(currentDocName);
+      console.log(`[Yjs Cleaned] Closed connection and purged doc: ${currentDocName}`);
     }
   }
   try {
@@ -101,7 +106,13 @@ const closeConn = (doc, conn) => {
 
 export const setupWSConnection = (conn, req, { docName = req.url.slice(1).split('?')[0], gc = true } = {}) => {
   conn.binaryType = 'nodebuffer';
+
   const doc = getYDoc(docName, gc);
+
+  if (persistence !== null && typeof persistence.bindState === 'function') {
+    persistence.bindState(docName, doc);
+  }
+
   doc.conns.set(conn, new Set());
 
   conn.on('message', (message) => {
@@ -127,7 +138,7 @@ export const setupWSConnection = (conn, req, { docName = req.url.slice(1).split(
           break;
       }
     } catch (err) {
-      console.error(err);
+      console.error("[Yjs WS Message Error]:", err);
     }
   });
 
