@@ -14,51 +14,55 @@ This platform supports dynamic wildcard subdomains (e.g., `apex.localhost:3000`)
 The primary focus of Week 2 was building a reliable, secure, and type-safe **Booking Management System** for the multi-tenant SaaS platform. This phase involved implementing **Zod Validation**, an **Idempotency Key Middleware**, and a **Standardized Error Handling Framework** on the backend, alongside an interactive **Dashboard UI**, **Create Booking Modal**, and **Toast Notifications** on the frontend.
 
 ---
+
 # 🚀 Week 3: Multi-Tenant Stripe Subscription & Billing Management
 
-This repository contains the Week-3 implementation of our Multi-Tenant SaaS platform. In this phase, we integrated **Stripe Subscriptions**, **Secure Idempotent Webhook Engine**, **Pricing & Billing Management UI**, and **Tenant-Aware Better Auth Login Support**.
+In this phase, we integrated **Stripe Subscriptions**, **Secure Idempotent Webhook Engine**, **Pricing & Billing Management UI**, and **Tenant-Aware Better Auth Login Support**.
 
 ---
-## 📌 Features & Key Accomplishments
 
-### 1. 💳 Stripe Backend Integration & Architecture
-* **Customer & Session Management**: Automated Stripe Customer creation and hosted Checkout Session generation based on tenant subdomain context.
-* **Customer Portal Integration**: Provided direct links for users to manage credit cards, download invoices, and cancel/reactivate subscriptions via Stripe's hosted portal.
-* **Tenant Isolation**: Payment events are strictly attached to `x-tenant-subdomain` headers and database references.
+# ⚡ Week 4: Real-Time Collaborative Notes & Document Sync (Yjs + TipTap)
 
-### 2. 🛡️ Secure & Idempotent Webhook Engine
-* **Raw Body Parsing**: Implemented express raw body parser specifically for Stripe webhook endpoints to preserve cryptographic signature integrity.
-* **Signature Verification**: Validates `stripe-signature` header against `STRIPE_WEBHOOK_SECRET`.
-* **Idempotency Protection**: Uses a dedicated `ProcessedWebhook` MongoDB model to log event IDs and prevent duplicate event execution.
-* **Supported Lifecycle Events**:
-  * `checkout.session.completed` -> Upgrades tenant plan and records `stripeCustomerId`.
-  * `customer.subscription.updated` -> Updates renewal periods, status (`active`, `past_due`), and cancellation requests.
-  * `customer.subscription.deleted` -> Downgrades tenant to `free` plan automatically.
-  * `invoice.payment_failed` -> Flags account as `past_due`.
+In Week 4, we turned booking notes into a real-time collaborative experience, enabling multiple staff members to simultaneously edit and manage booking details without version conflicts.
 
-### 3. 🎨 Frontend Pricing & Billing Dashboards
-* **Pricing Page (`/dashboard/pricing`)**: Modern UI featuring multi-tier subscription plans (Starter, Pro, Enterprise) with instant Stripe Checkout redirection.
-* **Billing Portal (`/dashboard/billing`)**: Real-time status badge (`Active`, `Past Due`, `Canceled`), billing period calendar tracker, and seamless Stripe Portal button.
-* **Feedback Handling**: Toast alerts and clean route navigation upon returning from Stripe Checkout (`?success=true` / `?canceled=true`).
+### 📌 Key Accomplishments & Features
 
-### 4. 🔐 Subdomain-Isolated Tenant Admin Authentication (Better Auth)
- Implemented secure multi-tenant access control using Better Auth and Next.js middleware, ensuring tenant admins must authenticate at their specific organization subdomain before accessing /dashboard by strictly validating matching tenantIds, preserving cross-subdomain session cookies, and seamlessly redirecting them back to their requested page post-login.
+1. **CRDT-Based Collaborative Editing Engine**:
+   - Integrated **Yjs** (CRDT protocol) with **TipTap Rich Text Editor** on the frontend.
+   - Built a dedicated **Node.js WebSocket Server** for real-time document synchronization.
+   - Live collaborative indicators featuring real-time multiplayer presence badges, colored remote cursor tracking, and active typing status.
+
+2. **MongoDB State Persistence**:
+   - Developed custom Yjs binary state persistence to store document updates in **MongoDB**.
+   - Automatic room lifecycle management: loads persisted document binary blobs on room creation and flushes Yjs state to DB when all users disconnect.
+
+3. **Multi-Tenant Room Isolation & Security**:
+   - Encoded subdomains directly into dynamic WebSocket room namespaces (`${subdomain}:${bookingId}`).
+   - Ensured zero cross-tenant data leakage by decoupling real-time rooms at the connection boundary.
+
+4. **Resilient Network & Fallback Auto-Save Architecture**:
+   - **Graceful Network Handling**: Reconnection strategies with visual status indicators (`Live`, `Connecting...`, `Offline`).
+   - **REST Auto-Save Fallback**: Automatic debounced background fallback to REST APIs during WebSocket disconnections to guarantee zero data loss.
 
 ---
+
 ## 🛠️ Tech Stack
 
-* **Frontend**: Next.js (App Router), Tailwind CSS, Lucide React, Hot Toast
-* **Backend**: Node.js, Express.js
+* **Frontend**: Next.js (App Router), Tailwind CSS, Lucide React, Hot Toast, TipTap (`@tiptap/react`, `@tiptap/extension-collaboration`, `@tiptap/extension-collaboration-cursor`), Yjs, `y-websocket`
+* **Backend**: Node.js, Express.js, WebSocket (`ws`), Yjs (`yjs`, `y-protocols`, `lib0`)
 * **Database**: MongoDB with Mongoose & Native Adapter
 * **Authentication**: Better Auth
 * **Payments & Billing**: Stripe API SDK & Webhooks
+
 ---
 
-## Access Dashboard:
-Open your browser and navigate to your tenant subdomain (e.g., `[http://apex.localhost:3000/dashboard](http://apex.localhost:3000/dashboard)`) to manage bookings. 
+## 🔑 Access Dashboard:
+Open your browser and navigate to your tenant subdomain (e.g., `http://apex.localhost:3000/dashboard`) to manage bookings and real-time notes.
+
 For Login as apex admin use:
-* **email**:admin@admin.com
-* **password**:admin.1234
+* **email**: `admin@admin.com`
+* **password**: `admin.1234`
+
 ---
 
 ## 🚦 Getting Started & Run Instructions
@@ -66,7 +70,7 @@ For Login as apex admin use:
 Follow these instructions to run the project locally.
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) 
+- [Node.js](https://nodejs.org/) (v18+)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) 
 - [Git](https://git-scm.com/)
 
@@ -74,7 +78,7 @@ Follow these instructions to run the project locally.
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/mdsalahuddin96/SaaS_Project.git
+git clone [https://github.com/mdsalahuddin96/SaaS_Project.git](https://github.com/mdsalahuddin96/SaaS_Project.git)
 cd SaaS_Project
 
 ```
@@ -83,16 +87,35 @@ cd SaaS_Project
 
 ### Step 2: Configure Environment Variables
 
-Copy the `.env.example` templates from forntend and backend folder to create `.env` files in the backend and frontend directories:
+Copy the `.env.example` templates from frontend and backend directories:
 
 ```bash
 # Set up Backend Environment
 cp backend/.env.example backend/.env
 
-# Set up Frontend Environment (if applicable)
+# Set up Frontend Environment
 cp frontend/.env.example frontend/.env
 
 ```
+
+Ensure the following Webpack & WebSocket URLs are present:
+
+* **Backend `.env`**:
+```env
+PORT=5000
+WS_PORT=5000 # Shared HTTP/WS server
+
+```
+
+
+* **Frontend `.env`**:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_WS_URL=ws://localhost:5000/yjs
+
+```
+
+
 
 ---
 
@@ -105,36 +128,29 @@ docker compose up -d
 
 ```
 
-> 💡 **Database Admin UI:** Access Mongo Express at [http://localhost:8081](http://localhost:8081) to visually inspect collections and documents.
+> 💡 **Database Admin UI:** Access Mongo Express at [http://localhost:8081](http://localhost:8081) to inspect collections and stored Yjs document states.
 
 ---
 
-### Step 4: Testing Webhooks Locally
+### Step 4: Testing Webhooks Locally (Stripe CLI)
 
-To test Stripe payment events (like successful subscriptions or payment failures) during local development, follow these steps using the Stripe CLI:
+To test Stripe payment events during local development:
 
-* **Install the Stripe CLI**  
-   Follow the official guide to install [Stripe CLI](https://stripe.com/docs/stripe-cli) for your operating system.
+```bash
+stripe login
+stripe listen --forward-to localhost:5000/api/payments/webhook
 
-* **Authenticate the CLI**  
-   Run the login command and follow the instructions in your browser:
-   ```bash
-   stripe login
-   ```
+```
 
-* **Forward Webhook Events to Backend**
-  Forward Stripe events directly to your running Express backend server:
-  ```bash
-  stripe listen --forward-to localhost:5000/api/payments/webhook
-  
-  ```
-* **Set Webhook Secret**
-  Copy the `whsec_...` secret key outputted in your terminal after running the listener command, and add it to your backend `.env` file:
-  ```env
-  STRIPE_WEBHOOK_SECRET=whsec_your_generated_local_secret
-  
-  ```
+Copy the `whsec_...` key from the terminal and add it to `backend/.env`:
+
+```env
+STRIPE_WEBHOOK_SECRET=whsec_your_generated_local_secret
+
+```
+
 ---
+
 ### Step 5: Install Dependencies & Run Backend
 
 Open a terminal for the backend server:
@@ -143,15 +159,15 @@ Open a terminal for the backend server:
 cd backend
 npm install
 
-# Seed initial test data (Creates 'apex' tenant, users & sample bookings)
+# Seed initial test data (Creates 'apex' tenant, users, sample bookings & notes)
 npm run seed
 
-# Start Express Backend API
+# Start Express Backend API & Yjs WebSocket Server
 npm run dev
 
 ```
 
-> 📡 **Backend API** will be available at `http://localhost:5000`
+> 📡 **Backend API & WebSocket Server** will be available at `http://localhost:5000` (`ws://localhost:5000/yjs`)
 
 ---
 
@@ -170,13 +186,13 @@ npm run dev
 
 ---
 
-## 🧪 Testing Subdomain Routing
+## 🧪 Testing Subdomain Routing & Real-Time Collaboration
 
-Open your browser and visit:
+Open your browser and test:
 
 * **Main Landing Page:** [http://localhost:3000](http://localhost:3000)
 * **Tenant Subdomain (Apex):** [http://apex.localhost:3000](https://www.google.com/search?q=http://apex.localhost:3000)
-* **Backend API Status:** [http://localhost:5000](http://localhost:5000)
+* **Real-Time Collaborative Notes:** Open `http://apex.localhost:3000/dashboard/bookings/[bookingId]` in two separate browser windows or incognito modes to test live multiplayer cursor and text sync.
 
 ```
 
