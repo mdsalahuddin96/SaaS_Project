@@ -35,5 +35,16 @@ services:
     depends_on:
       - mongodb
 
+  # 🔴 NEW: Week 5 Redis Service Added
+  redis:
+    image: redis:alpine
+    container_name: saas_booking_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   mongo_data:
+  redis_data: # 🔴 Redis Volume

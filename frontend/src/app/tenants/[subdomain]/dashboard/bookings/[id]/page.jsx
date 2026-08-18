@@ -59,7 +59,7 @@ export default function BookingDetailsPage({ params }) {
 
       if (!foundBooking) {
         toast.error("Booking not found!");
-        router.push(`/tenants/${subdomain}/dashboard/bookings`);
+        router.push(`/dashboard/bookings`);
         return;
       }
 

@@ -1,0 +1,46 @@
+import Redis from 'ioredis';
+
+let redisClient = null;
+let isRedisReady = false;
+
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+
+try {
+  redisClient = new Redis(REDIS_URL, {
+    maxRetriesPerRequest: 1, // দ্রুত ফেল করার জন্য
+    enableOfflineQueue: false, // Redis ডাউন থাকলে রিকোয়েস্ট ঝুলিয়ে রাখবে না
+    retryStrategy(times) {
+      if (times > 3) {
+        console.warn('⚠️ [Redis] Reached max connection retries. Degrading to DB Mode.');
+        return null; // রিকানেক্ট চেষ্টা বন্ধ
+      }
+      return Math.min(times * 200, 1000);
+    },
+  });
+
+  redisClient.on('connect', () => {
+    isRedisReady = true;
+    console.log('⚡ [Redis] Connected successfully.');
+  });
+
+  redisClient.on('ready', () => {
+    isRedisReady = true;
+    console.log('🚀 [Redis] Client is ready for queries.');
+  });
+
+  redisClient.on('error', (err) => {
+    isRedisReady = false;
+    console.error('❌ [Redis Error]:', err.message);
+  });
+
+  redisClient.on('end', () => {
+    isRedisReady = false;
+    console.warn('🔌 [Redis] Connection closed. Falling back to DB.');
+  });
+} catch (error) {
+  isRedisReady = false;
+  console.error('❌ [Redis Client Init Failed]:', error);
+}
+
+export const checkRedisHealth = () => isRedisReady;
+export default redisClient;

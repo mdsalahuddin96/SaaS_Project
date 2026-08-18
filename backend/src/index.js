@@ -12,7 +12,7 @@ import paymentRoute from "./routes/payment.route.js";
 import webhookRoute from "./routes/webhook.route.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initYjsWebSocketServer } from "./websocket/yjsServer.js";
-
+import tenantSettingsRoute from "./routes/tenantSettings.route.js";
 const app = express();
 app.use(
   cors({
@@ -43,7 +43,7 @@ app.use("/api/test", testRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/bookings", bookingRoute);
 app.use("/api/payments", paymentRoute);
-
+app.use("/api/tenant-settings",tenantSettingsRoute)
 //Testing get
 app.get("/", async (req, res) => {
   res.status(200).json({ message: "Hello welcome" });
