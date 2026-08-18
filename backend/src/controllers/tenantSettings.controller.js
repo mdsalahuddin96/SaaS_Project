@@ -84,7 +84,7 @@ export const updateTenantSettings = async (req, res) => {
     const updatedSettings = await TenantSettings.findOneAndUpdate(
       { subdomain },
       { $set: updates },
-      { upsert: true, new: true, runValidators: true }
+      { upsert: true, returnDocument: 'after', runValidators: true }
     ).lean();
 
     // 2. Cache Invalidation Strategy
