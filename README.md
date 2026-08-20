@@ -216,7 +216,7 @@ npm test
 
 ### Manual Redis Cache & Degradation Verification
 
-1. **Cache Miss & Cache Hit**: Visit `http://apex.localhost:3000/admin/settings`. The badge will read 🗄️ **Database (Direct)** on first load and switch to ⚡ **Cached (Redis)** upon refresh.
+1. **Cache Miss & Cache Hit**: Visit `http://apex.localhost:3000/deshboard/settings`. The badge will read 🗄️ **Database (Direct)** on first load and switch to ⚡ **Cached (Redis)** upon refresh.
 2. **Cache Invalidation**: Update settings via the Admin UI. The cache will immediately invalidate and rebuild with new data.
 3. **Graceful Degradation Test**: Stop Redis (`docker stop saas_booking_redis`) and refresh the page. The app will smoothly switch to ⚠️ **DB Fallback** mode without erroring out.
 

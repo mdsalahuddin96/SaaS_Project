@@ -2,8 +2,7 @@
 import redisClient, { checkRedisHealth } from '../lib/redis.js';
 import TenantSettings from '../models/TenantSettings.js';
 
-const CACHE_TTL = 3600; // ১ ঘণ্টা (সেকেন্ডে)
-
+const CACHE_TTL = 3600; 
 // Unique key per tenant
 const getCacheKey = (subdomain) => `tenant:${subdomain}:settings`;
 
@@ -38,7 +37,6 @@ export const getTenantSettings = async (req, res) => {
     // 2. Fetch from MongoDB (Cache Miss or Redis Down)
     let settings = await TenantSettings.findOne({ subdomain });
 
-    // প্রথমবার না থাকলে Default Document তৈরি করা
     if (!settings) {
       settings = await TenantSettings.create({ subdomain });
     }

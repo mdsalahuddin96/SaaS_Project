@@ -8,6 +8,7 @@ export default async function DashboardLayout({ children, params }) {
     {text:"Customers", href:"/dashboard/customers"},
     {text:"Pricing", href:"/dashboard/pricing"},
     {text:"Billing", href:"/dashboard/billing"},
+    {text:"Settings", href:"/dashboard/settings"}
   ]
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-slate-900 text-slate-100 font-inter">
