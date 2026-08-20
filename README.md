@@ -1,73 +1,98 @@
+# 🚀 Multi-Tenant SaaS Booking Platform
 
-# 🚀 Multi-Tenant SaaS Booking Platform (Week 1 Foundation)
+A scalable, secure, and high-performance multi-tenant SaaS booking architecture built with **Next.js**, **Node.js/Express**, **MongoDB**, **Redis**, and **BetterAuth**. 
 
-A scalable, secure, and modern multi-tenant SaaS booking architecture built with **Next.js**, **Node.js/Express**, **MongoDB**, and **BetterAuth**. 
+This platform supports dynamic wildcard subdomains (e.g., `apex.localhost:3000`), complete tenant data isolation via Express request context, real-time collaboration, and high-availability caching with graceful degradation.
 
-This platform supports dynamic wildcard subdomains (e.g., `apex.localhost:3000`), complete tenant data isolation via Express request context, and seamless tenant onboarding.
+---
+
+# 🚀 Week 1: Multi-Tenant Architecture & Auth Foundation
+
+* **Tenant Isolation**: Wildcard subdomains (`*.localhost:3000`) and request-context-based tenant boundary enforcement.
+* **Authentication**: Integrated **BetterAuth** with multi-tenant user and session management.
+* **Database Design**: Automated tenant schema association and initial seed scripts.
 
 ---
 
 # 🗓️ Week 2: Booking APIs & Calendar UI
 
-## 📌 Overview
-
-The primary focus of Week 2 was building a reliable, secure, and type-safe **Booking Management System** for the multi-tenant SaaS platform. This phase involved implementing **Zod Validation**, an **Idempotency Key Middleware**, and a **Standardized Error Handling Framework** on the backend, alongside an interactive **Dashboard UI**, **Create Booking Modal**, and **Toast Notifications** on the frontend.
-
----
-
-# 🚀 Week 3: Multi-Tenant Stripe Subscription & Billing Management
-
-In this phase, we integrated **Stripe Subscriptions**, **Secure Idempotent Webhook Engine**, **Pricing & Billing Management UI**, and **Tenant-Aware Better Auth Login Support**.
+* **Type-Safe Validation**: Integrated **Zod** schema validation for all API routes.
+* **Resilience**: Implemented custom **Idempotency Key Middleware** and standardized error handling.
+* **Dashboard UI**: Interactive booking calendar, create/edit modals, and toast notification alerts.
 
 ---
 
-# ⚡ Week 4: Real-Time Collaborative Notes & Document Sync (Yjs + TipTap)
+# 💳 Week 3: Multi-Tenant Stripe Subscription & Billing
 
-In Week 4, we turned booking notes into a real-time collaborative experience, enabling multiple staff members to simultaneously edit and manage booking details without version conflicts.
+* **Subscriptions**: Integrated **Stripe API SDK** for dynamic tier management (Free, Pro, Enterprise).
+* **Webhook Engine**: Idempotent webhook listener for real-time payment event processing.
+* **Tenant-Aware Login**: Custom login support tailored for tenant subdomains.
+
+---
+
+# ⚡ Week 4: Real-Time Collaborative Notes (Yjs + TipTap)
+
+* **CRDT Collaboration**: Embedded **Yjs** CRDT engine with **TipTap Rich Text Editor**.
+* **WebSocket Server**: Built a custom Node.js WebSocket pipeline supporting dynamic namespaces (`${subdomain}:${bookingId}`) for zero cross-tenant data leaks.
+* **Live Presence**: Real-time multiplayer badges, active typing indicators, and colored remote cursors.
+* **Binary Persistence**: Binary Yjs state serialization saved directly to **MongoDB**.
+* **Fallback Auto-Save**: Seamless network reconnection strategy with debounced REST fallback on connection loss.
+
+---
+
+# ⚡ Week 5: Advanced Caching (Redis) & Settings UI
 
 ### 📌 Key Accomplishments & Features
 
-1. **CRDT-Based Collaborative Editing Engine**:
-   - Integrated **Yjs** (CRDT protocol) with **TipTap Rich Text Editor** on the frontend.
-   - Built a dedicated **Node.js WebSocket Server** for real-time document synchronization.
-   - Live collaborative indicators featuring real-time multiplayer presence badges, colored remote cursor tracking, and active typing status.
+1. **Redis Cache-Aside Architecture**:
+   - Integrated **Redis via Docker Compose** to cache tenant-specific configuration settings (`tenant:{subdomain}:settings`).
+   - Achieved near-instant response times for tenant-wide settings reads, bypassing database queries on cache hits.
 
-2. **MongoDB State Persistence**:
-   - Developed custom Yjs binary state persistence to store document updates in **MongoDB**.
-   - Automatic room lifecycle management: loads persisted document binary blobs on room creation and flushes Yjs state to DB when all users disconnect.
+2. **Automated Cache Invalidation**:
+   - Implemented write-through cache invalidation strategy on settings updates (`PUT /api/tenant-settings/:subdomain`).
+   - Flushes and updates stale cache keys instantly to maintain 100% cache coherency across subdomains.
 
-3. **Multi-Tenant Room Isolation & Security**:
-   - Encoded subdomains directly into dynamic WebSocket room namespaces (`${subdomain}:${bookingId}`).
-   - Ensured zero cross-tenant data leakage by decoupling real-time rooms at the connection boundary.
+3. **High-Availability Graceful Degradation**:
+   - Designed non-blocking Redis connection handlers using `ioredis`.
+   - **Automatic DB Fallback**: If the Redis service goes offline or crashes, backend endpoints seamlessly degrade to MongoDB reads without throwing 500 errors or stopping the application.
 
-4. **Resilient Network & Fallback Auto-Save Architecture**:
-   - **Graceful Network Handling**: Reconnection strategies with visual status indicators (`Live`, `Connecting...`, `Offline`).
-   - **REST Auto-Save Fallback**: Automatic debounced background fallback to REST APIs during WebSocket disconnections to guarantee zero data loss.
+4. **Automated Cache Coherency Test Suite**:
+   - Built an automated **Jest** test suite using `mongodb-memory-server`.
+   - Asserts 100% coverage for Cache Misses, Cache Hits, Cache Invalidation on updates, and DB Fallback execution when Redis is disconnected.
+
+5. **Tenant Admin Settings UI & Live Indicators**:
+   - Developed a modern **Tenant Admin Settings UI** page for managing tenant branding, colors, and booking slot durations.
+   - Real-time visual status badges:
+     - ⚡ **Cached (Redis)**: Served instantly from memory.
+     - 🗄️ **Database (Direct)**: Fresh query from MongoDB.
+     - ⚠️ **DB Fallback**: Redis offline notice.
+     - 🔄 Live **Save Indicators** with instant feedback on cache refresh.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Frontend**: Next.js (App Router), Tailwind CSS, Lucide React, Hot Toast, TipTap (`@tiptap/react`, `@tiptap/extension-collaboration`, `@tiptap/extension-collaboration-cursor`), Yjs, `y-websocket`
-* **Backend**: Node.js, Express.js, WebSocket (`ws`), Yjs (`yjs`, `y-protocols`, `lib0`)
-* **Database**: MongoDB with Mongoose & Native Adapter
+* **Frontend**: Next.js (App Router), React, Tailwind CSS, Lucide React, Hot Toast, TipTap (`@tiptap/react`, `@tiptap/extension-collaboration`), Yjs, `y-websocket`
+* **Backend**: Node.js, Express.js, WebSocket (`ws`), Yjs (`yjs`), `ioredis`, Mongoose
+* **Caching & In-Memory**: Redis (Docker)
+* **Database**: MongoDB (Replica Set enabled for transactions) with Mongo Express UI
 * **Authentication**: Better Auth
-* **Payments & Billing**: Stripe API SDK & Webhooks
+* **Payments**: Stripe API SDK & Webhooks
+* **Testing**: Jest, Supertest, `mongodb-memory-server`
 
 ---
 
-## 🔑 Access Dashboard:
-Open your browser and navigate to your tenant subdomain (e.g., `http://apex.localhost:3000/dashboard`) to manage bookings and real-time notes.
+## 🔑 Access Dashboard
+
+Open your browser and navigate to your tenant subdomain (e.g., `http://apex.localhost:3000/dashboard`) to manage bookings, settings, and collaborative notes.
 
 For Login as apex admin use:
-* **email**: `admin@admin.com`
-* **password**: `admin.1234`
+* **Email**: `admin@admin.com`
+* **Password**: `admin.1234`
 
 ---
 
 ## 🚦 Getting Started & Run Instructions
-
-Follow these instructions to run the project locally.
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18+)
@@ -78,7 +103,7 @@ Follow these instructions to run the project locally.
 
 ### Step 1: Clone the Repository
 ```bash
-git clone [https://github.com/mdsalahuddin96/SaaS_Project.git](https://github.com/mdsalahuddin96/SaaS_Project.git)
+git clone https://github.com/mdsalahuddin96/SaaS_Project.git
 cd SaaS_Project
 
 ```
@@ -87,7 +112,7 @@ cd SaaS_Project
 
 ### Step 2: Configure Environment Variables
 
-Copy the `.env.example` templates from frontend and backend directories:
+Copy `.env.example` to `.env` in both frontend and backend directories:
 
 ```bash
 # Set up Backend Environment
@@ -98,43 +123,45 @@ cp frontend/.env.example frontend/.env
 
 ```
 
-Ensure the following Webpack & WebSocket URLs are present:
+Ensure the following variables are set:
 
-* **Backend `.env`**:
+* **Backend `.env`:**
+
 ```env
 PORT=5000
-WS_PORT=5000 # Shared HTTP/WS server
+WS_PORT=5000
+MONGO_URI=mongodb://localhost:27017/saas_booking?replicaSet=rs0
+REDIS_URL=redis://localhost:6379
 
 ```
 
+* **Frontend `.env`:**
 
-* **Frontend `.env`**:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_WS_URL=ws://localhost:5000/yjs
 
 ```
 
-
-
 ---
 
-### Step 3: Start Infrastructure via Docker Compose
+### Step 3: Start Services via Docker Compose
 
-Spin up MongoDB (configured with a Replica Set for transactions) and Mongo Express UI:
+Spin up MongoDB (with Replica Set setup), Mongo Express, and **Redis**:
 
 ```bash
 docker compose up -d
 
 ```
 
-> 💡 **Database Admin UI:** Access Mongo Express at [http://localhost:8081](http://localhost:8081) to inspect collections and stored Yjs document states.
+> 💡 **Database Admin UI:** Access Mongo Express at [http://localhost:8081](http://localhost:8081).
+> ⚡ **Redis Cache Service:** Running locally on `localhost:6379`.
 
 ---
 
-### Step 4: Testing Webhooks Locally (Stripe CLI)
+### Step 4: Testing Webhooks Locally (Optional)
 
-To test Stripe payment events during local development:
+To test Stripe payment events locally:
 
 ```bash
 stripe login
@@ -142,38 +169,27 @@ stripe listen --forward-to localhost:5000/api/payments/webhook
 
 ```
 
-Copy the `whsec_...` key from the terminal and add it to `backend/.env`:
-
-```env
-STRIPE_WEBHOOK_SECRET=whsec_your_generated_local_secret
-
-```
-
 ---
 
 ### Step 5: Install Dependencies & Run Backend
-
-Open a terminal for the backend server:
 
 ```bash
 cd backend
 npm install
 
-# Seed initial test data (Creates 'apex' tenant, users, sample bookings & notes)
+# Seed initial test data (Creates 'apex' tenant, users, bookings & default settings)
 npm run seed
 
-# Start Express Backend API & Yjs WebSocket Server
+# Start Express Backend & Yjs WebSocket Server
 npm run dev
 
 ```
 
-> 📡 **Backend API & WebSocket Server** will be available at `http://localhost:5000` (`ws://localhost:5000/yjs`)
+> 📡 **Backend API & WebSockets** available at `http://localhost:5000`
 
 ---
 
 ### Step 6: Install Dependencies & Run Frontend
-
-Open a new terminal tab or window for the frontend application:
 
 ```bash
 cd frontend
@@ -186,14 +202,21 @@ npm run dev
 
 ---
 
-## 🧪 Testing Subdomain Routing & Real-Time Collaboration
+## 🧪 Automated Testing & Cache Verification
 
-Open your browser and test:
+### Run Automated Jest Tests
 
-* **Main Landing Page:** [http://localhost:3000](http://localhost:3000)
-* **Tenant Subdomain (Apex):** [http://apex.localhost:3000](https://www.google.com/search?q=http://apex.localhost:3000)
-* **Real-Time Collaborative Notes:** Open `http://apex.localhost:3000/dashboard/bookings/[bookingId]` in two separate browser windows or incognito modes to test live multiplayer cursor and text sync.
+To execute backend integration and cache coherency test suites:
+
+```bash
+cd backend
+npm test
 
 ```
 
-```
+### Manual Redis Cache & Degradation Verification
+
+1. **Cache Miss & Cache Hit**: Visit `http://apex.localhost:3000/admin/settings`. The badge will read 🗄️ **Database (Direct)** on first load and switch to ⚡ **Cached (Redis)** upon refresh.
+2. **Cache Invalidation**: Update settings via the Admin UI. The cache will immediately invalidate and rebuild with new data.
+3. **Graceful Degradation Test**: Stop Redis (`docker stop saas_booking_redis`) and refresh the page. The app will smoothly switch to ⚠️ **DB Fallback** mode without erroring out.
+
